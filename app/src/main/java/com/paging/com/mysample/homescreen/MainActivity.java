@@ -9,10 +9,13 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 
 import com.facebook.shimmer.ShimmerFrameLayout;
@@ -22,34 +25,37 @@ import com.paging.com.mysample.pojo.Image;
 public class MainActivity extends AppCompatActivity {
 
     private ShimmerFrameLayout shimmerViewContainer;
-    private ItemAdapter adapter;
-
+   private RecyclerView mRecyclerView;
+    private  ItemViewModel mItemViewModel;
+    private ItemAdapter mItemAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setUpUI();
-        final RecyclerView recyclerView = findViewById(R.id.image_list);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setHasFixedSize(true);
-        ItemViewModel itemViewModel = ViewModelProviders.of(this).get(ItemViewModel.class);
+        mRecyclerView= findViewById(R.id.image_list);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mRecyclerView.setHasFixedSize(true);
+       mItemViewModel= ViewModelProviders.of(this).get(ItemViewModel.class);
 
-        adapter = new ItemAdapter(this);
+        mItemAdapter= new ItemAdapter(this);
         showLoadingIndicator(true);
-        itemViewModel.itemPagedList.observe(this, new Observer<PagedList<Image>>() {
+        mItemViewModel.getRepoReuslt().observe(this, new Observer<PagedList<Image>>() {
             @Override
             public void onChanged(@Nullable final PagedList<Image> items) {
 
                 if (shimmerViewContainer.getVisibility() == View.VISIBLE) {
                     showLoadingIndicator(false);
                 }
-                recyclerView.setVisibility(View.VISIBLE);
-                adapter.submitList(items);
+                mRecyclerView.setVisibility(View.VISIBLE);
+                mItemAdapter.submitList(items);
 
             }
         });
 
-        recyclerView.setAdapter(adapter);
+        mRecyclerView.setAdapter(mItemAdapter);
+
+        mItemViewModel.searchProducts("");
     }
 
     @Override
@@ -57,20 +63,62 @@ public class MainActivity extends AppCompatActivity {
         MenuInflater inflater = getMenuInflater();
         // Inflate menu to add items to action bar if it is present.
         inflater.inflate(R.menu.menu_main, menu);
+        MenuItem search_item = menu.findItem(R.id.menu_search);
+
+        SearchView searchView = (SearchView) search_item.getActionView();
+        searchView.setFocusable(false);
+        searchView.setQueryHint("Search");
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+
+
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+
+                //clear the previous data in search arraylist if exist
+                updateRepoListFromInput( s);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                return false;
+            }
+        });
+
+
         return true;
+
     }
+
+
+    /**
+     * Updates the list with the new data when the User entered the query and hit 'enter' or
+     * corresponding action to trigger the Search.
+     */
+    private void updateRepoListFromInput(String query) {
+
+        String queryEntered = query.trim();
+        //if (!TextUtils.isEmpty(queryEntered)) {
+        mRecyclerView.scrollToPosition(0);
+        //Posts the query to be searched
+        mItemViewModel.searchProducts(queryEntered);
+        //Resets the old list
+        mItemAdapter.submitList(null);
+        //}
+    }
+
 
     public void showLoadingIndicator(boolean active) {
         if (active) {
             shimmerViewContainer.setVisibility(View.VISIBLE);
-            shimmerViewContainer.startShimmerAnimation();
+            shimmerViewContainer.startShimmer();
         } else {
 
             Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    shimmerViewContainer.stopShimmerAnimation();
+                    shimmerViewContainer.stopShimmer();
                     shimmerViewContainer.setVisibility(View.GONE);
                 }
             }, 2000);
@@ -88,12 +136,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        shimmerViewContainer.startShimmerAnimation();
+        shimmerViewContainer.startShimmer();
     }
 
     @Override
     protected void onPause() {
-        shimmerViewContainer.stopShimmerAnimation();
+        shimmerViewContainer.stopShimmer();
         super.onPause();
     }
 

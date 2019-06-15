@@ -12,6 +12,10 @@ public interface ImageServices {
     Call<IMResponse> getAllImages(@Query("key") String apiKey, @Query("page") int page, @Query("per_page") String perPage);
 
     @GET("api/")
+    Call<IMResponse> getAllImagesWithSearch(@Query("key") String apiKey, @Query("page") int page, @Query("per_page") String perPage, @Query("q") String searchQuery);
+
+
+    @GET("api/")
     Call<IMResponse> searchImages(@Query("key") String apiKey, @Query("q") String searchQuery);
 
 }

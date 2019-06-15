@@ -10,10 +10,15 @@ public class ItemDataSourceFactory extends DataSource.Factory {
 
     private MutableLiveData<PageKeyedDataSource<Integer, Image>> itemLiveDataSource = new MutableLiveData<>();
 
+    private String query;
+
+    public ItemDataSourceFactory(String query) {
+        this.query = query;
+    }
 
     @Override
     public DataSource<Integer, Image> create() {
-        ItemDataSource itemDataSource = new ItemDataSource();
+        ItemDataSource itemDataSource = new ItemDataSource(query);
         itemLiveDataSource.postValue(itemDataSource);
         return itemDataSource;
     }

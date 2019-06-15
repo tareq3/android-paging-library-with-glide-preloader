@@ -12,11 +12,12 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.paging.com.mysample.R;
 import com.paging.com.mysample.pojo.Image;
 import com.makeramen.roundedimageview.RoundedTransformationBuilder;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Transformation;
+
 
 public class ItemAdapter extends PagedListAdapter<Image, ItemAdapter.ItemViewHolder> {
 
@@ -53,23 +54,20 @@ public class ItemAdapter extends PagedListAdapter<Image, ItemAdapter.ItemViewHol
         holder.like.setText(image.getLikes().toString());
         holder.comments.setText(image.getComments().toString());
 
-        Picasso.get()
-                .load(image.getLargeImageURL())
+        Glide.with(mCtx)
+                .load(image.getWebformatURL())
                 .placeholder(R.drawable.shimmer_background)
+                .thumbnail(0.1f)
+
                 .into(holder.image);
 
-        Transformation transformation = new RoundedTransformationBuilder()
-                .borderColor(Color.BLACK)
-                .borderWidthDp(1)
-                .cornerRadiusDp(30)
-                .oval(false)
-                .build();
+
 
         if (!image.getUserImageURL().isEmpty()) {
-            Picasso.get()
+            Glide.with(mCtx)
                     .load(image.getUserImageURL())
-                    .fit()
-                    .transform(transformation)
+                    .centerCrop()
+                    .transform(new CircleCrop())
                     .into(holder.userImage);
         }
     }
