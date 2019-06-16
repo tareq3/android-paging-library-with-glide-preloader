@@ -14,7 +14,7 @@ import retrofit2.Response;
 
 public class ItemDataSource extends PageKeyedDataSource<Integer, Image> {
 
-    public static final int PAGE_SIZE = 10;
+    public static final int PAGE_SIZE = 50;
     private static final int FIRST_PAGE = 1;
 
     private final String API_KEY = "8439361-5e1e53a0e1b58baa26ab398f7";

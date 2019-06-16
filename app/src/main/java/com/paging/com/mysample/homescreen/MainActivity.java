@@ -3,24 +3,35 @@ package com.paging.com.mysample.homescreen;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.arch.paging.PagedList;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.FrameLayout;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.ListPreloader;
+import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader;
+
+import com.bumptech.glide.util.ViewPreloadSizeProvider;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.paging.com.mysample.R;
+import com.paging.com.mysample.Util.GlideApp;
 import com.paging.com.mysample.pojo.Image;
+
+import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,11 +45,29 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         setUpUI();
         mRecyclerView= findViewById(R.id.image_list);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mRecyclerView.setLayoutManager(new GridLayoutManager(this,1));
         mRecyclerView.setHasFixedSize(true);
        mItemViewModel= ViewModelProviders.of(this).get(ItemViewModel.class);
 
-        mItemAdapter= new ItemAdapter(this);
+        RequestBuilder<Drawable> gifItemRequest = GlideApp.with(this).asDrawable();
+
+        ViewPreloadSizeProvider<Image> preloadSizeProvider = new ViewPreloadSizeProvider<>();
+
+        mItemAdapter= new ItemAdapter(this,gifItemRequest,preloadSizeProvider);
+
+        RecyclerViewPreloader<Image> preloader =
+                new RecyclerViewPreloader<>(GlideApp.with(this), mItemAdapter, preloadSizeProvider, 20);
+        mRecyclerView.addOnScrollListener(preloader);
+        mRecyclerView.setRecyclerListener( (holder) -> {
+            // This is an optimization to reduce the memory usage of RecyclerView's recycled view
+            // pool
+            // and good practice when using Glide with RecyclerView.
+            ItemAdapter.ItemViewHolder gifViewHolder = (ItemAdapter.ItemViewHolder) holder;
+            GlideApp.with(MainActivity.this).clear(gifViewHolder.image);
+        });
+
+        mRecyclerView.setAdapter(mItemAdapter);
+
         showLoadingIndicator(true);
         mItemViewModel.getRepoReuslt().observe(this, new Observer<PagedList<Image>>() {
             @Override
@@ -53,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mRecyclerView.setAdapter(mItemAdapter);
+
 
         mItemViewModel.searchProducts("");
     }
@@ -144,5 +173,7 @@ public class MainActivity extends AppCompatActivity {
         shimmerViewContainer.stopShimmer();
         super.onPause();
     }
+
+
 
 }

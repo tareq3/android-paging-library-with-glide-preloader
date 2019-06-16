@@ -3,7 +3,9 @@ package com.paging.com.mysample.homescreen;
 import android.arch.paging.PagedListAdapter;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,13 +15,21 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.ListPreloader;
+import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
+import com.bumptech.glide.util.ViewPreloadSizeProvider;
 import com.paging.com.mysample.R;
 import com.paging.com.mysample.pojo.Image;
 import com.makeramen.roundedimageview.RoundedTransformationBuilder;
 
+import java.util.Collections;
+import java.util.List;
 
-public class ItemAdapter extends PagedListAdapter<Image, ItemAdapter.ItemViewHolder> {
+
+public class ItemAdapter extends PagedListAdapter<Image, ItemAdapter.ItemViewHolder> implements ListPreloader.PreloadModelProvider<Image>{
+    private final RequestBuilder<Drawable> requestBuilder;
+    private final ViewPreloadSizeProvider<Image> preloadSizeProvider;
 
     private static DiffUtil.ItemCallback<Image> DIFF_CALLBACK =
             new DiffUtil.ItemCallback<Image>() {
@@ -35,9 +45,13 @@ public class ItemAdapter extends PagedListAdapter<Image, ItemAdapter.ItemViewHol
             };
     private Context mCtx;
 
-    public ItemAdapter(Context mCtx) {
+    public ItemAdapter(Context mCtx, RequestBuilder<Drawable> requestBuilder,
+                       ViewPreloadSizeProvider<Image> preloadSizeProvider) {
         super(DIFF_CALLBACK);
         this.mCtx = mCtx;
+        this.requestBuilder = requestBuilder;
+        this.preloadSizeProvider = preloadSizeProvider;
+
     }
 
     @NonNull
@@ -54,13 +68,14 @@ public class ItemAdapter extends PagedListAdapter<Image, ItemAdapter.ItemViewHol
         holder.like.setText(image.getLikes().toString());
         holder.comments.setText(image.getComments().toString());
 
-        Glide.with(mCtx)
+     /*   Glide.with(mCtx)
                 .load(image.getWebformatURL())
                 .placeholder(R.drawable.shimmer_background)
                 .thumbnail(0.1f)
 
-                .into(holder.image);
-
+                .into(holder.image);*/
+        requestBuilder.load(image.getWebformatURL()).into(holder.image);
+        preloadSizeProvider.setView(holder.image);
 
 
         if (!image.getUserImageURL().isEmpty()) {
@@ -72,7 +87,19 @@ public class ItemAdapter extends PagedListAdapter<Image, ItemAdapter.ItemViewHol
         }
     }
 
-    class ItemViewHolder extends RecyclerView.ViewHolder {
+    @NonNull
+    @Override
+    public List<Image> getPreloadItems(int position) {
+        return Collections.singletonList(getItem(position));
+    }
+
+    @Nullable
+    @Override
+    public RequestBuilder<?> getPreloadRequestBuilder(@NonNull Image item) {
+        return requestBuilder.load(item.getWebformatURL());
+    }
+
+   public static class ItemViewHolder extends RecyclerView.ViewHolder {
 
         TextView userName, like, comments;
         ImageView image, userImage;

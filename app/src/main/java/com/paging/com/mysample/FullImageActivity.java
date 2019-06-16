@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
 
-import com.bumptech.glide.Glide;
+import com.paging.com.mysample.Util.GlideApp;
 
 
 public class FullImageActivity extends AppCompatActivity {
@@ -19,7 +19,7 @@ public class FullImageActivity extends AppCompatActivity {
         String url = intent.getStringExtra("imageUrl");
         if (!url.isEmpty()) {
             ImageView imageView = findViewById(R.id.image);
-            Glide.with(imageView)
+            GlideApp.with(imageView)
                     .load(url)
                     .placeholder(R.drawable.shimmer_background)
                     .thumbnail(0.1f)
